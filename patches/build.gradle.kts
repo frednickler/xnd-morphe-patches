@@ -4,10 +4,10 @@ patches {
     about {
         name = "frednickler Patches"
         description = "Patches for apps I like"
-        source = "https://github.com/frednickler/okish-morphe-patches"
+        source = "https://github.com/frednickler/xnd-morphe-patches"
         author = "frednickler"
         contact = "na"
-        website = "https://github.com/frednickler/okish-morphe-patches"
+        website = "https://github.com/frednickler/xnd-morphe-patches"
         license = "GPLv3"
     }
 }

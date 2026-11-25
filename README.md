@@ -1,13 +1,13 @@
 <div align="center">
 
-# 🧩 okish-morphe-patches
+# 🧩 morphe-patches
 
 **A personal collection of Morphe patches for favorite Android apps and games.**
 
-[![Release](https://img.shields.io/github/v/release/frednickler/okish-morphe-patches?style=for-the-badge&logo=github&color=5865F2)](https://github.com/frednickler/okish-morphe-patches/releases)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/frednickler/okish-morphe-patches/release.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release)](https://github.com/frednickler/okish-morphe-patches/actions/workflows/release.yml)
-[![License: GPL v3](https://img.shields.io/github/license/frednickler/okish-morphe-patches?style=for-the-badge&color=forestgreen)](LICENSE)
-[![Add to Morphe](https://img.shields.io/badge/Morphe-Add%20Source-8A2BE2?style=for-the-badge&logo=android&logoColor=white)](https://morphe.software/add-source?github=frednickler/okish-morphe-patches)
+[![Release](https://img.shields.io/github/v/release/frednickler/xnd-morphe-patches?style=for-the-badge&logo=github&color=5865F2)](https://github.com/frednickler/xnd-morphe-patches/releases)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/frednickler/xnd-morphe-patches/release.yml?branch=main&style=for-the-badge&logo=githubactions&logoColor=white&label=Release)](https://github.com/frednickler/xnd-morphe-patches/actions/workflows/release.yml)
+[![License: GPL v3](https://img.shields.io/github/license/frednickler/xnd-morphe-patches?style=for-the-badge&color=forestgreen)](LICENSE)
+[![Add to Morphe](https://img.shields.io/badge/Morphe-Add%20Source-8A2BE2?style=for-the-badge&logo=android&logoColor=white)](https://morphe.software/add-source?github=frednickler/xnd-morphe-patches)
 
 [About](#-about) • [How to Use](#-how-to-use) • [Patches List](#-patches-list) • [App Requests](#-app-requests) • [Contributing](#-contributing) • [Building](#%EF%B8%8F-building-from-source) • [License](#-license)
 
@@ -17,7 +17,7 @@
 
 ## ❓ About
 
-**okish-morphe-patches** is a personal collection of custom patches created for the [Morphe](https://morphe.software) patching ecosystem, primarily developed for personal use and educational research on apps I actively use.
+**xnd-morphe-patches** is a personal collection of custom patches created for the [Morphe](https://morphe.software) patching ecosystem, primarily developed for personal use and educational research on apps I actively use.
 
 ---
 
@@ -25,17 +25,17 @@
 
 If you are on an Android device with **Morphe Manager** installed, tap the button below to add this repository as a patch source:
 
-[![Add Source to Morphe](https://img.shields.io/badge/Import%20to%20Morphe-Click%20Here-8A2BE2?style=for-the-badge&logo=android&logoColor=white)](https://morphe.software/add-source?github=frednickler/okish-morphe-patches)
+[![Add Source to Morphe](https://img.shields.io/badge/Import%20to%20Morphe-Click%20Here-8A2BE2?style=for-the-badge&logo=android&logoColor=white)](https://morphe.software/add-source?github=frednickler/xnd-morphe-patches)
 
 Direct URL:  
-👉 **https://morphe.software/add-source?github=frednickler/okish-morphe-patches**
+👉 **https://morphe.software/add-source?github=frednickler/xnd-morphe-patches**
 
 ---
 
 ## 🩹 Patches list
 
 <!-- PATCHES_START -->
-> **[v1.52.0](https://github.com/frednickler/okish-morphe-patches/releases/tag/v1.52.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;161 patches total
+> **[v1.00.1](https://github.com/frednickler/xnd-morphe-patches/releases/tag/v1.00.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;161 patches total
 <details>
 <summary>📦 Into the Dead 2&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
 <br>
@@ -1072,9 +1072,9 @@ Direct URL:
 ## 💡 App Requests
 
 > [!NOTE]
-> **okish-morphe-patches** is a personal project I created for the apps and games I personally use.
+> **xnd-morphe-patches** is a personal project I created for the apps and games I personally use.
 >
-> - **App requests are open**: If you'd like to suggest an app or a patch, feel free to open a feature request via [GitHub Issues](https://github.com/frednickler/okish-morphe-patches/issues/new/choose).
+> - **App requests are open**: If you'd like to suggest an app or a patch, feel free to open a feature request via [GitHub Issues](https://github.com/frednickler/xnd-morphe-patches/issues/new/choose).
 > - **Discretionary pickup**: Whether a requested app will actually be picked up, investigated, or patched **totally depends on me** (based on whether I use the app, my personal interest, and available time).
 > - Please understand there are no promises, guarantees, or ETAs for requested apps.
 
@@ -1131,8 +1131,8 @@ Contributions and improvements are welcome! If you'd like to contribute, please 
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/frednickler/okish-morphe-patches.git
-   cd okish-morphe-patches
+   git clone https://github.com/frednickler/xnd-morphe-patches.git
+   cd xnd-morphe-patches
    ```
 
 2. **Build the patch package (`.mpp`):**
@@ -1158,4 +1158,4 @@ This project is provided for **educational purposes only**.
 
 ## 📜 License
 
-**okish-morphe-patches** is licensed under the [GNU General Public License v3.0](LICENSE).
+**xnd-morphe-patches** is licensed under the [GNU General Public License v3.0](LICENSE).

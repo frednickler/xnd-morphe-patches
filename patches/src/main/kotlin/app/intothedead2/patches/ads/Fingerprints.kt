@@ -6,7 +6,7 @@ import app.morphe.patcher.string
 import com.android.tools.smali.dexlib2.AccessFlags
 
 // ---------------------------------------------------------------------------
-// T4 — Rewarded ads, instant grant (LevelPlay new-API bridge, classes6).
+// T4 — Rewarded ads, instant grant (LevelPlay new-API bridge, classes7).
 //
 // The C# LevelPlayRewardedAd.ShowAd entry lands in RewardedAd.showAd. The
 // patch fakes availability (isAdReady, isPlacementCapped, loadAd) and fires a
@@ -16,7 +16,7 @@ import com.android.tools.smali.dexlib2.AccessFlags
 // ---------------------------------------------------------------------------
 
 // RewardedAd.isAdReady()Z — public. Forwards to LevelPlayRewardedAd.isAdReady.
-// Smali: classes6/com/ironsource/unity/androidbridge/RewardedAd.smali (.registers 2).
+// DEX: classes7/com/ironsource/unity/androidbridge/RewardedAd (.registers 2).
 // Single filter: only caller of LevelPlayRewardedAd.isAdReady in this class.
 object RewardedAdIsAdReadyFingerprint : Fingerprint(
     definingClass = "Lcom/ironsource/unity/androidbridge/RewardedAd;",
@@ -109,14 +109,31 @@ object RewardedAdShowAdFingerprint : Fingerprint(
 )
 
 // ---------------------------------------------------------------------------
-// T5 — Startup interstitial kill (LevelPlay new-API bridge, classes6).
+// T5 — Startup interstitial kill (LevelPlay new-API bridge, classes7).
 //
-// InterstitialAd.showAd(String)V — public. Forwards to
-// LevelPlayInterstitialAd.showAd(Activity, String). Smali: InterstitialAd.smali
-// (.registers 4, iget mInterstitialAd + iget mActivity + showAd).
-// Single filter: only caller of LevelPlayInterstitialAd.showAd in this class.
+// InterstitialAd.setupInterstitialListener captures the C# proxy listener and
+// InterstitialAd.showAd(String)V fires synthetic onAdDisplayed + onAdClosed
+// callbacks with the live placementName so C# does not stall waiting on close.
 // Banners are intentionally NOT covered here.
 // ---------------------------------------------------------------------------
+object InterstitialAdSetupListenerFingerprint : Fingerprint(
+    definingClass = "Lcom/ironsource/unity/androidbridge/InterstitialAd;",
+    name = "setupInterstitialListener",
+    returnType = "V",
+    accessFlags = listOf(AccessFlags.PRIVATE),
+    parameters = listOf("Lcom/ironsource/unity/androidbridge/IUnityInterstitialAdListener;"),
+    filters = listOf(
+        methodCall(
+            definingClass = "Lcom/ironsource/unity/androidbridge/InterstitialAd\$1",
+            name = "<init>",
+        ),
+        methodCall(
+            definingClass = "Lcom/unity3d/mediation/interstitial/LevelPlayInterstitialAd;",
+            name = "setListener",
+        )
+    )
+)
+
 object InterstitialAdShowAdFingerprint : Fingerprint(
     definingClass = "Lcom/ironsource/unity/androidbridge/InterstitialAd;",
     name = "showAd",
@@ -132,41 +149,14 @@ object InterstitialAdShowAdFingerprint : Fingerprint(
 )
 
 // ---------------------------------------------------------------------------
-// L1 — Tapjoy bridge show kill (primary C#-wired fullscreen path, classes7).
-//
-// TapjoyConnectUnity.showPlacementContent(String)V — public static. GUID
-// lookup in cSharpGuidMap, then TJPlacement.showContent. Smali:
-// classes7/com/tapjoy/TapjoyConnectUnity.smali (.registers 2).
-// Filter order matches smali: Hashtable.get first, then showContent.
-// Tapjoy and Hashtable names are SDK and platform stable, never obfuscated.
-// ---------------------------------------------------------------------------
-object TapjoyShowPlacementContentFingerprint : Fingerprint(
-    definingClass = "Lcom/tapjoy/TapjoyConnectUnity;",
-    name = "showPlacementContent",
-    returnType = "V",
-    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.STATIC),
-    parameters = listOf("Ljava/lang/String;"),
-    filters = listOf(
-        methodCall(
-            definingClass = "Ljava/util/Hashtable;",
-            name = "get",
-        ),
-        methodCall(
-            definingClass = "Lcom/tapjoy/TJPlacement;",
-            name = "showContent",
-        )
-    )
-)
-
-// ---------------------------------------------------------------------------
-// L3 — Tapjoy choke point (covers the SDK-internal AppLaunch auto-show that
-// bypasses L1, classes7).
+// L3 — Tapjoy choke point (covers both TapjoyConnectUnity.showPlacementContent
+// and the SDK-internal AppLaunch auto-show path, classes3).
 //
 // TJPlacement.showContent()V — public. Sole funnel for bridge placements,
 // the AppLaunch auto-show chain, and InsufficientCurrency placements.
-// Smali: classes7/com/tapjoy/TJPlacement.smali (.registers 4).
-// Filter order matches smali: log literal first, then the
-// isContentAvailable gate, then the TJCorePlacement.c render call.
+// DEX: classes3/com/tapjoy/TJPlacement (.registers 4).
+// Filter order matches DEX: log literal first, then the isContentAvailable
+// gate, then the TJCorePlacement.c render call.
 // ---------------------------------------------------------------------------
 object TJPlacementShowContentFingerprint : Fingerprint(
     definingClass = "Lcom/tapjoy/TJPlacement;",

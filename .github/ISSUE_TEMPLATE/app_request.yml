@@ -13,8 +13,8 @@ body:
 
         Before opening a request:
 
-        - **Do not submit a duplicate**: search the [open and closed issues](https://github.com/byehi98/okish-morphe-patches/issues?q=is%3Aissue).
-        - **Check the supported apps**: see the [README](https://github.com/byehi98/okish-morphe-patches/blob/main/README.md) for the current patch list.
+        - **Do not submit a duplicate**: search the [open and closed issues](https://github.com/frednickler/xnd-morphe-patches/issues?q=is%3Aissue).
+        - **Check the supported apps**: see the [README](https://github.com/frednickler/xnd-morphe-patches/blob/main/README.md) for the current patch list.
   - type: input
     id: app-name
     attributes:

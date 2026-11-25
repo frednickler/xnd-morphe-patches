@@ -1,4 +1,4 @@
-rootProject.name = "okish-morphe-patches"
+rootProject.name = "xnd-morphe-patches"
 
 buildCache {
     local {

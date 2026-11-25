@@ -28,20 +28,27 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableField
  * setupRewardedListener, which runs from the bridge constructor. When the
  * field is unset the injected blocks fall through to the original bodies.
  *
- * Part 2 — STARTUP AD ONLY (T5 plus L1, L3, L2). The cold-start fullscreen ad
- * is killed at every C#-reachable show entry: LevelPlay InterstitialAd.showAd
- * returns void immediately, TapjoyConnectUnity.showPlacementContent returns
- * void, TJPlacement.showContent returns void (this is the choke point that
- * also covers the SDK-internal AppLaunch auto-show path which bypasses the
- * bridge method), and both Meta InterstitialAd.show overloads report failure.
+ * Part 2 — STARTUP AD ONLY (T5 plus L3, L2). The cold-start fullscreen ad
+ * is killed at every C#-reachable show entry without leaving the game waiting
+ * on a never-arriving close callback: LevelPlay InterstitialAd.showAd captures
+ * the C# proxy in setupInterstitialListener and fires synthetic onAdDisplayed
+ * and onAdClosed callbacks with the live placementName; TJPlacement.showContent
+ * (the choke point covering both TapjoyConnectUnity.showPlacementContent and
+ * the SDK-internal AppLaunch auto-show path) notifies its listener (field b)
+ * via onContentDismiss and returns immediately; and both Meta
+ * InterstitialAd.show overloads report failure.
  *
  * Deliberately out of scope: banners, UMP consent, CrossPromo WebView and
  * AlertView, MoreGames and DRSPromo popups, DailyReward popups, Offerwall,
  * and the Unity splash, all of which are lookalikes or user-invoked flows.
  *
- * Register budgets, all verified against smali: RewardedAd.loadAd has
- * .registers 2 and is expanded by 2; RewardedAd.showAd has .registers 4 and
- * is expanded by 4; setupRewardedListener needs no new registers.
+ * Register budgets, all verified against 1.89.0 DEX:
+ *   RewardedAd.loadAd                        .registers 2 -> cloneMutable(+2) -> 4
+ *   RewardedAd.showAd                        .registers 4 -> cloneMutable(+6) -> 10
+ *   RewardedAd.setupRewardedListener         .registers 4 -> no expansion needed
+ *   InterstitialAd.setupInterstitialListener .registers 4 -> no expansion needed
+ *   InterstitialAd.showAd                    .registers 4 -> cloneMutable(+4) -> 8
+ *   TJPlacement.showContent                  .registers 4 -> cloneMutable(+2) -> 6
  */
 @Suppress("unused")
 val intoTheDead2AdsPatch = bytecodePatch(
@@ -96,7 +103,9 @@ val intoTheDead2AdsPatch = bytecodePatch(
         // Reward lookup is live: getReward(placement) supplies the exact name
         // and amount the game expects. A null lookup falls back to a reward
         // built from the live placement string, so nothing is hardcoded.
-        val rewardedShowAd = RewardedAdShowAdFingerprint.method.cloneMutable(additionalRegisters = 4)
+        // adInfo JSON must include "placementName" so C# adInfo.PlacementName
+        // is non-null when OnAdRewarded dispatches by placement.
+        val rewardedShowAd = RewardedAdShowAdFingerprint.method.cloneMutable(additionalRegisters = 6)
         mutableClassDefBy(rewardedShowAd.definingClass).methods.apply {
             remove(RewardedAdShowAdFingerprint.method)
             add(rewardedShowAd)
@@ -121,10 +130,18 @@ val intoTheDead2AdsPatch = bytecodePatch(
             move-result-object v2
             invoke-virtual {v1}, Lcom/unity3d/mediation/rewarded/LevelPlayReward;->getAmount()I
             move-result v3
-            const-string v1, "{}"
-            invoke-interface {v0, v1}, Lcom/ironsource/unity/androidbridge/IUnityRewardedAdListener;->onAdDisplayed(Ljava/lang/String;)V
-            invoke-interface {v0, v1, v2, v3}, Lcom/ironsource/unity/androidbridge/IUnityRewardedAdListener;->onAdRewarded(Ljava/lang/String;Ljava/lang/String;I)V
-            invoke-interface {v0, v1}, Lcom/ironsource/unity/androidbridge/IUnityRewardedAdListener;->onAdClosed(Ljava/lang/String;)V
+            new-instance v4, Ljava/lang/StringBuilder;
+            invoke-direct {v4}, Ljava/lang/StringBuilder;-><init>()V
+            const-string v5, "{\"placementName\":\""
+            invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+            invoke-virtual {v4, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+            const-string v5, "\"}"
+            invoke-virtual {v4, v5}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+            invoke-virtual {v4}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+            move-result-object v5
+            invoke-interface {v0, v5}, Lcom/ironsource/unity/androidbridge/IUnityRewardedAdListener;->onAdDisplayed(Ljava/lang/String;)V
+            invoke-interface {v0, v5, v2, v3}, Lcom/ironsource/unity/androidbridge/IUnityRewardedAdListener;->onAdRewarded(Ljava/lang/String;Ljava/lang/String;I)V
+            invoke-interface {v0, v5}, Lcom/ironsource/unity/androidbridge/IUnityRewardedAdListener;->onAdClosed(Ljava/lang/String;)V
             return-void
             :cond_real
             nop
@@ -132,9 +149,70 @@ val intoTheDead2AdsPatch = bytecodePatch(
         )
 
         // ---- Part 2: startup interstitial and fullscreen show kills. ----
-        InterstitialAdShowAdFingerprint.method.returnEarly()
-        TapjoyShowPlacementContentFingerprint.method.returnEarly()
-        TJPlacementShowContentFingerprint.method.returnEarly()
+        // 2a. Capture LevelPlay InterstitialAd listener and fire onAdDisplayed/onAdClosed callbacks.
+        mutableClassDefBy("Lcom/ironsource/unity/androidbridge/InterstitialAd;").fields.add(
+            ImmutableField(
+                "Lcom/ironsource/unity/androidbridge/InterstitialAd;",
+                "mUnityInterstitialAdListener",
+                "Lcom/ironsource/unity/androidbridge/IUnityInterstitialAdListener;",
+                AccessFlags.PRIVATE.value,
+                null,
+                null,
+                null
+            ).toMutable()
+        )
+        InterstitialAdSetupListenerFingerprint.method.addInstructions(
+            0, """
+            iput-object p1, p0, Lcom/ironsource/unity/androidbridge/InterstitialAd;->mUnityInterstitialAdListener:Lcom/ironsource/unity/androidbridge/IUnityInterstitialAdListener;
+            """.trimIndent()
+        )
+
+        val interstitialShowAd = InterstitialAdShowAdFingerprint.method.cloneMutable(additionalRegisters = 4)
+        mutableClassDefBy(interstitialShowAd.definingClass).methods.apply {
+            remove(InterstitialAdShowAdFingerprint.method)
+            add(interstitialShowAd)
+        }
+        interstitialShowAd.addInstructionsWithLabels(
+            0, """
+            iget-object v0, p0, Lcom/ironsource/unity/androidbridge/InterstitialAd;->mUnityInterstitialAdListener:Lcom/ironsource/unity/androidbridge/IUnityInterstitialAdListener;
+            if-eqz v0, :cond_real
+            if-nez p1, :pl_ok
+            const-string p1, ""
+            :pl_ok
+            nop
+            new-instance v1, Ljava/lang/StringBuilder;
+            invoke-direct {v1}, Ljava/lang/StringBuilder;-><init>()V
+            const-string v2, "{\"placementName\":\""
+            invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+            invoke-virtual {v1, p1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+            const-string v2, "\"}"
+            invoke-virtual {v1, v2}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+            invoke-virtual {v1}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+            move-result-object v3
+            invoke-interface {v0, v3}, Lcom/ironsource/unity/androidbridge/IUnityInterstitialAdListener;->onAdDisplayed(Ljava/lang/String;)V
+            invoke-interface {v0, v3}, Lcom/ironsource/unity/androidbridge/IUnityInterstitialAdListener;->onAdClosed(Ljava/lang/String;)V
+            return-void
+            :cond_real
+            nop
+            """.trimIndent()
+        )
+
+        // 2b. Tapjoy placement choke point: notify listener (field b) of onContentDismiss so Unity does not hang waiting for placement completion.
+        val tjShowContent = TJPlacementShowContentFingerprint.method.cloneMutable(additionalRegisters = 2)
+        mutableClassDefBy(tjShowContent.definingClass).methods.apply {
+            remove(TJPlacementShowContentFingerprint.method)
+            add(tjShowContent)
+        }
+        tjShowContent.addInstructionsWithLabels(
+            0, """
+            iget-object v0, p0, Lcom/tapjoy/TJPlacement;->b:Lcom/tapjoy/TJPlacementListener;
+            if-eqz v0, :cond_no_listener
+            invoke-interface {v0, p0}, Lcom/tapjoy/TJPlacementListener;->onContentDismiss(Lcom/tapjoy/TJPlacement;)V
+            :cond_no_listener
+            return-void
+            """.trimIndent()
+        )
+
         MetaInterstitialShowFingerprint.method.returnEarly(false)
         MetaInterstitialShowWithConfigFingerprint.method.returnEarly(false)
     }

@@ -2730,6 +2730,32 @@
       "options": []
     },
     {
+      "name": "PlayCore Bypass",
+      "description": "Spoofs PlayAssetDeliveryUnityWrapper to always report assets as downloaded and available locally.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.pikpok.dr2.play",
+          "name": "Into the Dead 2",
+          "description": null,
+          "apkFileType": "XAPK",
+          "appIconColor": "#8B0000",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "1.89.0",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
       "name": "Prince of Persia: Full Game Unlock (native)",
       "description": "Replaces the game's built-in security helper with a friendly one that unlocks the full game right at startup — no waiting.",
       "default": true,
