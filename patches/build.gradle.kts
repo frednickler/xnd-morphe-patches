@@ -2,12 +2,12 @@ group = "okish"
 
 patches {
     about {
-        name = "byehi98 Patches"
+        name = "frednickler Patches"
         description = "Patches for apps I like"
-        source = "https://github.com/byehi98/okish-morphe-patches"
-        author = "byehi98"
+        source = "https://github.com/frednickler/okish-morphe-patches"
+        author = "frednickler"
         contact = "na"
-        website = "https://github.com/byehi98/okish-morphe-patches"
+        website = "https://github.com/frednickler/okish-morphe-patches"
         license = "GPLv3"
     }
 }
